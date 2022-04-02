@@ -1,0 +1,41 @@
+---
+title: "my_code_for_oneClassClassifier"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Outlier detection
+
+We will start importing out main library e1071 and reading spam database and selecting non spam data.
+
+```{r cars}
+spambase = read.csv(file="http://www.sc.ehu.es/ccwbayes/master/selected-dbs/nlp-naturallanguageprocessing/spambase.csv", header=TRUE, sep=,)
+spambase$class = as.factor(spambase$class)
+spambaseNONSPAM = spambase[spambase$class==0,]
+
+```
+
+Then, we delete the class in our data: 
+
+```{r pressure, echo=FALSE}
+dim(spambaseNONSPAM)
+spambaseNONSPAM=spambaseNONSPAM[,-58]
+```
+Now, we go to create a new SVM model:
+```{r pressure, echo=FALSE}
+library(e1071)
+data("airquality")
+df <- airquality
+model <- svm(spambaseNONSPAM,y=NULL,type='one-classification')
+print(model)
+summary(model)
+```
+
+Finally, we can do out prediction and plot only 10 of our result to check it:
+```{r pressure, echo=FALSE}
+pred<-predict(model,spambaseNONSPAM)
+plot(pred[0:10])
+```

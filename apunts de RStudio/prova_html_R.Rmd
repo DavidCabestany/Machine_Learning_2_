@@ -1,0 +1,56 @@
+---
+title: "ML2_09.12.21"
+author: "David Cabestany"
+date: "12/9/2021"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{This is a try, echo=FALSE}
+
+library(RSSL)
+
+set.seed(1)
+# Set the datasets and corresponding formula objects
+
+datasets <- list("2 Gaussian Expected"= generate2ClassGaussian(n=2000,d=2,expected=TRUE)
+
+# formulae <- list("2 Gaussian Expected"=formula(Class~.),
+# "2 Gaussian Non-Expected"=formula(Class~.))
+# # Define the classifiers to be used
+classifiers <- list("Supervised" = function(X,y,X_u,y_u) {LeastSquaresClassifier(X,y)},
+"Self-learning" = function(X,y,X_u,y_u) { SelfLearning(X,y,X_u,
+method = LeastSquaresClassifier)})
+
+# Define the performance measures to be used and run experiment
+
+measures <- list("Error" = measure_error, "Loss" = measure_losstest, "Accuracy" = measure_accuracy)
+
+results_lc <- LearningCurveSSL(as.matrix(datasets[,1:2]),dataset$Class, classifiers=classifiers,
+measures=measures,type=fraction, test_fraction=0.5, repeats=3)
+
+plot(results_lc)
+
+
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

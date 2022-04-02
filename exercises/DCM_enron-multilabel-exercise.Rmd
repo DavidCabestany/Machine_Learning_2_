@@ -1,0 +1,140 @@
+---
+title: "multilabel"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+install.packages("utiml")
+install.packages("mldr")
+library(utiml)
+library(mldr)
+# following package offers benchmarks for multi-label classification
+install.packages("mldr.datasets")
+library(mldr.datasets)
+enron <- enron()
+toBibtex(enron)
+enron$measures
+summary(enron)
+View(enron)
+# not practical, but part of its corpus can be viewed doing
+enroncorpus = enron$dataset
+View(enroncorpus)
+# enron's bag of words
+dim(enroncorpus)
+colnames(enroncorpus)
+# consult the help of the following function
+enron <- remove_skewness_labels(enron,10)
+# label bat plot
+plot(enron, type="LB")
+# visual relations among labels
+plot(enron, type="LC")
+# an external GUI interface to explore the "enron" dataset
+mldrGUI() # press "escape" to exit GUI
+# start modeling
+set.seed(123)
+# create a holdout partition: train and predict to evaluate
+# I created a small test partition as the prediction step takes a long time
+ds <- create_holdout_partition(enron, c(train=0.90, test=0.10))
+
+
+
+# Binary relevance ML strategy with naive Bayes base classifier
+model_BR_NB <- br(ds$train, "NB")
+predictionsBR <- predict(model_BR_NB, ds$test)
+head(predictionsBR)
+resultsBRPerExamples <- multilabel_evaluate(ds$test, predictionsBR, 
+                                          c("example-based"))
+resultsBRPerExamples
+resultsBRPerLabel <- multilabel_evaluate(ds$test, predictionsBR, 
+                                       c("label-based"))
+resultsBRPerLabel
+
+# Classifier Chain ML strategy with naive Bayes base classifier
+# Define the chain-order between labels: sample a random order
+mychain <- sample(rownames(enron$labels))
+model_CC_NB <- cc(ds$train, "NB", mychain)
+predictionsCC <- predict(model_CC_NB, ds$test)
+resultsCCPerExamples <- multilabel_evaluate(ds$test, predictionsCC, 
+                                          c("example-based"))
+resultsCCPerExamples
+resultsCCPerLabel <- multilabel_evaluate(ds$test, predictionsCC, 
+                                       c("label-based"))
+resultsCCPerLabel
+```
+
+
+```{r, include=TRUE}
+<<eval=FALSE, prompt=FALSE>>=
+# PROPOSED EXERCISE
+# Complete a similar work, for the popular Enron-Corpus of e-mails
+# To create the corpus and the associated dataFrame
+enron = enron()
+enron$labels
+# A description of its labels appears in the following lists:
+# https://bailando.berkeley.edu/enron/enron_categories.txt
+# https://data.world/brianray/enron-email-dataset
+# where for example "label 2.13" in the lists  is "label B.B13" for enron-labels
+```
+
+
+```{r, include=TRUE}
+
+<<eval=FALSE, prompt=FALSE>>=
+# "birds" dataset to predict the set of birds species
+# that are present, given a ten-second audio clip:
+# https://doi.org/10.1109/MLSP.2013.6661934
+summary(birds)
+birds$labels
+birds <- remove_skewness_labels(birds,10)
+# Type "birds$" for its list of attributes
+plot(birds, type="LB")
+# visual relations among labels
+plot(birds, type="LC")
+# an external GUI interface to explore the "birds" dataset
+mldrGUI() # press "escape" to exit GUI
+# start modeling
+set.seed(123)
+# create a holdout partition: train and predict to evaluate
+ds <- create_holdout_partition(birds, c(train=0.66, test=0.34))
+
+# Binary relevance ML strategy with naive Bayes base classifier
+model_BR_NB <- br(ds$train, "NB")
+predictionsBR <- predict(model_BR_NB, ds$test)
+head(predictionsBR)
+resultsBRPerExamples <- multilabel_evaluate(ds$test, predictionsBR, 
+                                          c("example-based"))
+resultsBRPerLabel <- multilabel_evaluate(ds$test, predictionsBR, 
+                                       c("label-based"))
+
+# Classifier Chain ML strategy with naive Bayes base classifier
+# Define the chain-order between labels: sample a random order
+mychain <- sample(rownames(birds$labels))
+model_CC_NB <- cc(ds$train, "NB", mychain)
+predictionsCC <- predict(model_CC_NB, ds$test)
+resultsCCPerExamples <- multilabel_evaluate(ds$test, predictionsCC, 
+                                          c("example-based"))
+resultsCCPerLabel <- multilabel_evaluate(ds$test, predictionsCC, 
+                                       c("label-based"))
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

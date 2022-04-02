@@ -1,0 +1,134 @@
+---
+title: "BaseLine"
+author: "David_Cabestany"
+date: "2/7/2022"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Select and read the corpora
+
+We have selected for the pipeline two subsets from 20 NewsGroup data set, a collection of 20,000 documents about news organizated in different topics as subsets. The two topics we have selected are: 
+
+|       1 - talk.politics.guns, a subset of documents that matters about politcs related to guns subject.
+|
+|       2 - sci.med, a subset of documents about medical reports.
+
+In this chunk we are reading and seeing the dimensions of our corpora:
+
+```{r dimentions}
+library(tm)
+# getwd() This is for know the working directoy
+cp.med <- VCorpus(DirSource("sci.med"),readerControl<-list(language<-"en")) 
+cp.pol.gun <- VCorpus(DirSource("talk.politics.guns"),
+                      readerControl <- list(language<-"en")) 
+cp.med # dimension of the medical corpus
+cp.pol.gun # dimension of the plitical corpus
+```
+
+```{r dimentions2, echo=TRUE,results='hide',fig.keep='all', warning = FALSE}
+inspect(cp.med[1:5]) # inspection the 5 first documents of the corpus
+inspect(cp.pol.gun[1:5]) # inspection the 5 first documents of the corpus
+
+```
+
+## Combining both corpora in one
+
+In this chunk we are merging both corpora in one in order to work with it. After that we have applied some cleaning rules, we aim to remove numbers, puntuation, and the most of stopwords, the following step will remove the whitespaces, and in the last step we will do a stemming.
+
+```{r combine, echo=TRUE,results='hide',fig.keep='all', warning = FALSE}
+
+guns.med<-c(cp.pol.gun,cp.med) # merge, concatenate both groups-corpuses 
+
+?getTransformations
+
+guns.med.trans <- tm_map(guns.med,removeNumbers) 
+toSpace <- content_transformer(function(x, pattern) gsub(pattern, "", x))
+guns.med.trans<-tm_map(guns.med.trans,removeWords,stopwords("english"))
+guns.med.trans <- tm_map(guns.med.trans, toSpace, ">>")
+guns.med.trans <- tm_map(guns.med.trans,removePunctuation)
+guns.med.trans <- tm_map(guns.med.trans, content_transformer(tolower)) 
+# convert to lowercase 
+
+
+#stopwords("english") 
+# shows the list of english stopwords with what we are working
+
+
+
+guns.med.trans<-tm_map(guns.med.trans,stripWhitespace) 
+#removes unnecessary white spaces
+
+library(SnowballC) # to access Porter's word stemming algorithm 
+guns.med.trans<-tm_map(guns.med.trans,stemDocument)
+
+```
+
+
+
+
+```{r DTM,  echo=TRUE,results='hide',fig.keep='all', warning = FALSE}
+
+guns.med.dtm <- DocumentTermMatrix(guns.med)
+dim(guns.med.dtm)
+inspect(guns.med.dtm[15:25,1040:1044]) # inspecting a subset of the matrix 
+
+findFreqTerms(guns.med.dtm,15) 
+
+#findAssocs(guns.med.dtm,term<-"young",corlimit<-0.7) 
+
+guns.med.dtm.50 <- removeSparseTerms(guns.med.dtm,sparse=0.5)
+
+#guns.med.dtm.70 # or dim(guns.med.dtm.70)
+# note that the term-document matrix needs to be transformed (casted)
+# to a matrix form in the following barplot command 
+barplot(as.matrix(guns.med.dtm.50),xlab="terms",ylab="number of occurrences",
+        main="Most frequent terms (sparseness<-0.5)")
+guns.med.dtm.80 <- removeSparseTerms(guns.med.dtm,sparse=0.8)
+guns.med.dtm.90 <- removeSparseTerms(guns.med.dtm,sparse=0.9)
+
+```
+```{r DTM2,  echo=TRUE,results='hide',fig.keep='all', warning = FALSE}
+
+data<-data.frame(as.matrix(guns.med.dtm.90)) 
+# convert corpus to dataFrame format
+
+type<-c(rep("politics",190),rep("medicine",190)) 
+# create the type vector to be appended 
+
+
+
+
+
+
+findFreqTerms(guns.med.dtm.90, lowfreq=15, highfreq=Inf)
+```
+
+
+
+
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure,  echo=TRUE,results='hide',fig.keep='all', warning = FALSE}
+library(wordcloud)
+library(RColorBrewer)
+
+wordFreqs<-sort(colSums(as.matrix(guns.med.dtm.90)[,]), decreasing <- TRUE)
+
+words<-names(wordFreqs)
+
+freq<-wordFreqs
+
+pal2 <- RColorBrewer::brewer.pal(12, "Paired")
+#png("wordcloud_packages.png", width=1980,height=1800)
+wordcloud(words,freq, scale=c(3,1),min.freq=10,
+max.words=Inf, random.order=FALSE, rot.per=.15, colors=pal2)
+#dev.off()
+
+```
